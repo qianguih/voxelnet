@@ -28,16 +28,20 @@ $ g++ -o evaluate_object_3d_offline evaluate_object_3d_offline.cpp
     * Camera calibration matrices of object data set (16 MB): for visualization of predictions
     * Left color images of object data set (12 GB): for visualization of predictions
 
+2. In this project, we use the cropped point cloud data for training and testing. Point clouds outside the image coordinates are removed. Update the directories in `data/crop.py` and run `data/crop.py` to generate cropped data. Note that cropped point cloud data will overwrite raw point cloud data here.
+
 2. Split the training set into training and validation set according to the protocol [here](https://xiaozhichen.github.io/files/mv3d/imagesets.tar.gz). And rearrange the training dataset to have the following structure:
-    └── KITTI_DATA    <-- KITTI data directory
-        ├── training       <-- training data
-         |   ├── image_2
-         |   ├── label_2
-         |   └── velodyne
-        └── evaluation        <--- evaluation data
-        ├── image_2
-        ├── label_2
-        └── velodyne
+```plain
+└── DATA_DIR
+       ├── training   <-- training data
+       |   ├── image_2
+       |   ├── label_2
+       |   └── velodyne
+       └── evaluation  <--- evaluation data
+       ├── image_2
+       ├── label_2
+       └── velodyne
+       ```
         
 3. Update the dataset directory in `config.py`
 
@@ -62,18 +66,17 @@ $ ./kitti_eval/evaluate_object_3d_offline [KITTI_DATA]/evaluation/label_2 ./pred
 
 # Performances
 
-##### mAP
+##### AP
 
 |  | Easy | Moderate | Hard |
 |:-:|:-:|:-:|:-:|
 | Reported | 81.97 | 65.46 | 62.85 |
-|:-:|:-:|:-:|:-:|
 | Reproduced | 64.39  | 57.87 | 58.35 |
 
 
 # TODO
 
-- [X] fix the deadlock problem in multi-thread processing in training
-- [X] fix the deadlock problem when `vis` flag is set to True in `test.py`
-- [X] replace averaged calibration matrices with correct ones
+- [ ] fix the deadlock problem in multi-thread processing in training
+- [ ] fix the deadlock problem when `vis` flag is set to True in `test.py`
+- [ ] replace averaged calibration matrices with correct ones
 
