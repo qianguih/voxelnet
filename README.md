@@ -51,7 +51,7 @@ $ g++ -o evaluate_object_3d_offline evaluate_object_3d_offline.cpp
 ```bash
 $ python3 train.py
 ```
-training on two Nvidia 1080 Ti GPUs takes around 3 days (160 epochs as reported in the paper).
+training on two Nvidia 1080 Ti GPUs takes around 3 days (160 epochs as reported in the paper). During training, training statistics are recorded in `log/default`, which can be monitored by tensorboard. And models are saved in `save_model/default`.
 
 # Evaluate
 1. run `test.py` to produce predictions on validation set.
