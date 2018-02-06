@@ -28,9 +28,9 @@ $ g++ -o evaluate_object_3d_offline evaluate_object_3d_offline.cpp
     * Camera calibration matrices of object data set (16 MB): for visualization of predictions
     * Left color images of object data set (12 GB): for visualization of predictions
 
-2. In this project, we use the cropped point cloud data for training and testing. Point clouds outside the image coordinates are removed. Update the directories in `data/crop.py` and run `data/crop.py` to generate cropped data. Note that cropped point cloud data will overwrite raw point cloud data here.
+2. In this project, we use the cropped point cloud data for training and validation. Point clouds outside the image coordinates are removed. Update the directories in `data/crop.py` and run `data/crop.py` to generate cropped data. Note that cropped point cloud data will overwrite raw point cloud data.
 
-2. Split the training set into training and validation set according to the protocol [here](https://xiaozhichen.github.io/files/mv3d/imagesets.tar.gz). And rearrange the training dataset to have the following structure:
+2. Split the training set into training and validation set according to the protocol [here](https://xiaozhichen.github.io/files/mv3d/imagesets.tar.gz). And rearrange the folders to have the following structure:
 ```plain
 └── DATA_DIR
        ├── training   <-- training data
@@ -38,9 +38,9 @@ $ g++ -o evaluate_object_3d_offline evaluate_object_3d_offline.cpp
        |   ├── label_2
        |   └── velodyne
        └── evaluation  <--- evaluation data
-       ├── image_2
-       ├── label_2
-       └── velodyne
+       |   ├── image_2
+       |   ├── label_2
+       |   └── velodyne
 ```
         
 3. Update the dataset directory in `config.py`
@@ -51,6 +51,7 @@ $ g++ -o evaluate_object_3d_offline evaluate_object_3d_offline.cpp
 ```bash
 $ python3 train.py
 ```
+training on two Nvidia 1080 Ti takes around 3 days.
 
 # Evaluate
 1. run `test.py` to produce predictions on validation set.
@@ -61,7 +62,7 @@ results will be dumped into `predictions/data`. Set the `-vis` flag to True if d
 
 2. run the following command to measure quantitative performances of predictions:
 ```bash
-$ ./kitti_eval/evaluate_object_3d_offline [KITTI_DATA]/evaluation/label_2 ./predictions
+$ ./kitti_eval/evaluate_object_3d_offline [DATA_DIR]/evaluation/label_2 ./predictions
 ```
 
 # Performances
