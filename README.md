@@ -41,7 +41,7 @@ $ g++ -o evaluate_object_3d_offline evaluate_object_3d_offline.cpp
        ├── image_2
        ├── label_2
        └── velodyne
-       ```
+```
         
 3. Update the dataset directory in `config.py`
 
