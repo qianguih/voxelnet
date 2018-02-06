@@ -76,7 +76,7 @@ $ ./kitti_eval/evaluate_object_3d_offline [DATA_DIR]/evaluation/label_2 ./predic
 
 
 # TODO
-
+- [ ] improve the performances
 - [ ] fix the deadlock problem in multi-thread processing in training
 - [ ] fix the deadlock problem when `vis` flag is set to True in `test.py`
 - [ ] replace averaged calibration matrices with correct ones
