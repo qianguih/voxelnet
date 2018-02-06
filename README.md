@@ -13,7 +13,7 @@ This is an unofficial inplementation of [VoxelNet: End-to-End Learning for Point
 1. Clone this repository.
 2. Compile the Cython module
 ```bash
-$ python setup.py build_ext --inplace
+$ python3 setup.py build_ext --inplace
 ```
 3. Compile the evaluation code
 ```bash
