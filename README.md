@@ -37,7 +37,7 @@ $ g++ -o evaluate_object_3d_offline evaluate_object_3d_offline.cpp
        |   ├── image_2
        |   ├── label_2
        |   └── velodyne
-       └── evaluation  <--- evaluation data
+       └── validation  <--- evaluation data
        |   ├── image_2
        |   ├── label_2
        |   └── velodyne
@@ -62,12 +62,12 @@ results will be dumped into `predictions/data`. Set the `-vis` flag to True if d
 
 2. run the following command to measure quantitative performances of predictions:
 ```bash
-$ ./kitti_eval/evaluate_object_3d_offline [DATA_DIR]/evaluation/label_2 ./predictions
+$ ./kitti_eval/evaluate_object_3d_offline [DATA_DIR]/validation/label_2 ./predictions
 ```
 
 # Performances
 
-##### AP
+##### AP of car detection
 
 |  | Easy | Moderate | Hard |
 |:-:|:-:|:-:|:-:|
@@ -77,7 +77,7 @@ $ ./kitti_eval/evaluate_object_3d_offline [DATA_DIR]/evaluation/label_2 ./predic
 
 # TODO
 - [ ] improve the performances
-- [ ] fix the deadlock problem in multi-thread processing in training
-- [ ] fix the deadlock problem when `vis` flag is set to True in `test.py`
+- [X] fix the deadlock problem in multi-thread processing in training
+- [X] fix the infinite loop problem in `test.py`
 - [ ] replace averaged calibration matrices with correct ones
 
