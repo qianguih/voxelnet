@@ -47,7 +47,8 @@ def main(_):
     # TODO: split file support
     with tf.Graph().as_default():
         global save_model_dir
-
+        start_epoch = 0
+        global_counter = 0
 
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=cfg.GPU_MEMORY_FRACTION,
                                     visible_device_list=cfg.GPU_AVAILABLE,
@@ -75,6 +76,8 @@ def main(_):
                 print("Reading model parameters from %s" % save_model_dir)
                 model.saver.restore(
                     sess, tf.train.latest_checkpoint(save_model_dir))
+                start_epoch = model.epoch.eval() + 1
+                global_counter = model.global_step.eval() + 1
             else:
                 print("Created model with fresh parameters.")
                 tf.global_variables_initializer().run()
@@ -88,8 +91,7 @@ def main(_):
 
 
             # training
-            global_counter = 0
-            for epoch in range(0, args.max_epoch):
+            for epoch in range(start_epoch, args.max_epoch):
                 counter = 0
                 for batch in iterate_data(train_dir, shuffle=True, aug=True, is_testset=False, batch_size=args.single_batch_size * cfg.GPU_USE_COUNT, multi_gpu_sum=cfg.GPU_USE_COUNT):
                     
@@ -105,12 +107,12 @@ def main(_):
                     ret = model.train_step( sess, batch, train=True, summary = is_summary )
                     times = time.time() - start_time
                     
-                    print('train: {}/{} @ epoch:{}/{} loss: {} reg_loss: {} cls_loss: {} time: {}'.format(
-                                counter, 0,
+                    print('train: {} @ epoch:{}/{} loss: {} reg_loss: {} cls_loss: {} time: {}'.format(
+                                counter,
                                 epoch, args.max_epoch,
                                 ret[0], ret[1], ret[2], times))
                     with open('log/train.txt', 'a') as f:
-                        f.write( 'train: {}/{} @ epoch:{}/{} loss: {} reg_loss: {} cls_loss: {} time: {} \n'.format(counter, 0,epoch, args.max_epoch, ret[0], ret[1], ret[2], times) )
+                        f.write( 'train: {} @ epoch:{}/{} loss: {} reg_loss: {} cls_loss: {} time: {} \n'.format(counter, epoch, args.max_epoch, ret[0], ret[1], ret[2], times) )
                     
                     #print(counter, summary_interval, counter % summary_interval)
                     if counter % summary_interval == 0:
@@ -125,16 +127,21 @@ def main(_):
                         ret = model.validate_step(sess, batch, summary=True)
                         summary_writer.add_summary(ret[-1], global_counter)
                         
-                        ret = model.predict_step(sess, batch, summary=True)
-                        summary_writer.add_summary(ret[-1], global_counter)
+                        try:
+                            ret = model.predict_step(sess, batch, summary=True)
+                            summary_writer.add_summary(ret[-1], global_counter)
+                        except:
+                            print("prediction skipped due to error")
                     
                     if check_if_should_pause(args.tag):
                         model.saver.save(sess, os.path.join(save_model_dir, 'checkpoint'), global_step=model.global_step)
                         print('pause and save model @ {} steps:{}'.format(save_model_dir, model.global_step.eval()))
                         sys.exit(0)
                 
-            
+                sess.run(model.epoch_add_op)
+                
                 model.saver.save(sess, os.path.join(save_model_dir, 'checkpoint'), global_step=model.global_step)
+        
             
 
 

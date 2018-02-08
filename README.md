@@ -80,4 +80,6 @@ $ ./kitti_eval/evaluate_object_3d_offline [DATA_DIR]/validation/label_2 ./predic
 - [X] fix the deadlock problem in multi-thread processing in training
 - [X] fix the infinite loop problem in `test.py`
 - [ ] replace averaged calibration matrices with correct ones
+- [ ] fix the NaN problem in the `predict_step` function in `model.py`
+
 
