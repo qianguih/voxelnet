@@ -98,7 +98,7 @@ The current implementation and training scheme are able to produce results in th
 | Reproduced | 80.48  | 69.93 | 64.83 |
 
 The learning curve (validation performances vs epoches) is presented below:
-<p align=center><img width="30%" src="img/learning_curve.jpg" /></p>
+<p align=center><img width="90%" src="img/learning_curve.jpg" /></p>
 
 
 # TODO
