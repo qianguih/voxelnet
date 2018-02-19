@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:UTF-8 -*-
 
-# File Name : rpn.py
-# Purpose :
-# Creation Date : 10-12-2017
-# Last Modified : Tue 26 Dec 2017 03:16:37 PM CST
-# Created By : Jialin Zhao
 
 import tensorflow as tf
 import numpy as np
@@ -105,10 +100,13 @@ class MiddleAndRPN:
             #self.p_pos = tf.nn.softmax(p_map, dim=3)
             self.output_shape = [cfg.FEATURE_HEIGHT, cfg.FEATURE_WIDTH]
 
-            self.cls_loss = alpha * (-self.pos_equal_one * tf.log(self.p_pos + small_addon_for_BCE)) / self.pos_equal_one_sum \
-                + beta * (-self.neg_equal_one * tf.log(1 - self.p_pos +
-                                                       small_addon_for_BCE)) / self.neg_equal_one_sum
-            self.cls_loss = tf.reduce_sum(self.cls_loss)
+            self.cls_pos_loss = (-self.pos_equal_one * tf.log(self.p_pos + small_addon_for_BCE)) / self.pos_equal_one_sum
+            self.cls_neg_loss = (-self.neg_equal_one * tf.log(1 - self.p_pos + small_addon_for_BCE)) / self.neg_equal_one_sum
+            
+            self.cls_loss = tf.reduce_sum( alpha * self.cls_pos_loss + beta * self.cls_neg_loss )
+            self.cls_pos_loss_rec = tf.reduce_sum( self.cls_pos_loss )
+            self.cls_neg_loss_rec = tf.reduce_sum( self.cls_neg_loss )
+
 
             self.reg_loss = smooth_l1(r_map * self.pos_equal_one_for_reg, self.targets *
                                       self.pos_equal_one_for_reg, sigma) / self.pos_equal_one_sum

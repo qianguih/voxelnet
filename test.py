@@ -10,7 +10,7 @@ import tensorflow as tf
 from model import RPN3D
 from config import cfg
 from utils import *
-from utils.kitti_loader_v2 import iterate_data, sample_test_data
+from utils.kitti_loader import iterate_data, sample_test_data
 
 
 if __name__ == '__main__':

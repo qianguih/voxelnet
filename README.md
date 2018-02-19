@@ -8,6 +8,7 @@ This is an unofficial inplementation of [VoxelNet: End-to-End Learning for Point
 - `opencv`
 - `shapely`
 - `numba`
+- `easydict`
 
 # Installation
 1. Clone this repository.
@@ -19,6 +20,11 @@ $ python3 setup.py build_ext --inplace
 ```bash
 $ cd kitti_eval
 $ g++ -o evaluate_object_3d_offline evaluate_object_3d_offline.cpp
+```
+4. grant the execution permission to evaluation script
+```bash
+$ cd kitti_eval
+$ chmod +x launch_test.sh
 ```
 
 # Data Preparation
@@ -43,22 +49,30 @@ $ g++ -o evaluate_object_3d_offline evaluate_object_3d_offline.cpp
        |   └── velodyne
 ```
         
-3. Update the dataset directory in `config.py`
+3. Update the dataset directory in `config.py` and `kitti_eval/launch_test.sh`
 
 # Train
 1. Specify the GPUs to use in `config.py`
 2. run `train.py` with desired hyper-parameters to start training:
 ```bash
-$ python3 train.py
+$ python3 train.py --alpha 1 --beta 10
 ```
-training on two Nvidia 1080 Ti GPUs takes around 3 days (160 epochs as reported in the paper). During training, training statistics are recorded in `log/default`, which can be monitored by tensorboard. And models are saved in `save_model/default`.
+Note that the hyper-parameter settings introduced in the paper are not able to produce high quality results. So, a different setting is specified here.
+
+Training on two Nvidia 1080 Ti GPUs takes around 3 days (160 epochs as reported in the paper). During training, training statistics are recorded in `log/default`, which can be monitored by tensorboard. And models are saved in `save_model/default`. Intermediate validation results will be dumped into the folder `predictions/XXX/data` with `XXX` as the epoch number. And metrics will be calculated and saved in  `predictions/XXX/log`. If the `--vis` flag is set to be `True`, visualizations of intermediate results will be dumped in the folder `predictions/XXX/vis`.
+
+3. When the training is done, executing `parse_log.py` will generate the learning curve.
+```bash
+$ python3 parse_log.py predictions
+```
+
 
 # Evaluate
-1. run `test.py` to produce predictions on validation set.
+1. run `test.py` to produce final predictions on the validation set.
 ```bash
 $ python3 test.py
 ```
-results will be dumped into `predictions/data`. Set the `-vis` flag to True if dumping visualizations and they will be saved into `predictions/vis`. Currently, setting `-vis` will evoke a deadlock problem and requires to manully kill the process when testing is done.
+results will be dumped into `predictions/data`. Set the `--vis` flag to True if dumping visualizations and they will be saved into `predictions/vis`.
 
 2. run the following command to measure quantitative performances of predictions:
 ```bash
@@ -67,19 +81,31 @@ $ ./kitti_eval/evaluate_object_3d_offline [DATA_DIR]/validation/label_2 ./predic
 
 # Performances
 
-##### AP of car detection
+The current implementation and training scheme are able to produce results in the tables below.
 
-|  | Easy | Moderate | Hard |
+##### Bird's eye view detection performance: AP on KITTI validation set
+
+| Car | Easy | Moderate | Hard |
+|:-:|:-:|:-:|:-:|
+| Reported | 89.60 | 84.81 | 78.57 |
+| Reproduced | 86.98  | 84.65  | 77.95 |
+
+##### 3D detection performance: AP on KITTI validation set
+
+| Car | Easy | Moderate | Hard |
 |:-:|:-:|:-:|:-:|
 | Reported | 81.97 | 65.46 | 62.85 |
-| Reproduced | 64.39  | 57.87 | 58.35 |
+| Reproduced | 80.48  | 69.93 | 64.83 |
+
+The learning curve (validation performances vs epoches) is presented below:
+<p align=center><img width="30%" src="img/learning_curve.jpg" /></p>
 
 
 # TODO
-- [ ] improve the performances
+- [X] improve the performances
+- [ ] reproduce results for `Pedestrian` and `Cyclist`
 - [X] fix the deadlock problem in multi-thread processing in training
 - [X] fix the infinite loop problem in `test.py`
-- [ ] replace averaged calibration matrices with correct ones
-- [ ] fix the NaN problem in the `predict_step` function in `model.py`
+- [X] replace averaged calibration matrices with correct ones
 
 

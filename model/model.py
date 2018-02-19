@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:UTF-8 -*-
 
-# File Name : model.py
-# Purpose :
-# Creation Date : 09-12-2017
-# Last Modified : Fri 05 Jan 2018 09:34:48 PM CST
-# Created By : Jeasine Ma [jeasinema[at]gmail[dot]com]
 
 import sys
 import os
@@ -42,8 +37,9 @@ class RPN3D(object):
         self.beta = beta
         self.avail_gpus = avail_gpus
 
-        lr = tf.train.exponential_decay(
-            self.learning_rate, self.global_step, 10000, 0.96)
+        boundaries = [80, 120]
+        values = [ self.learning_rate, self.learning_rate * 0.1, self.learning_rate * 0.01 ]
+        lr = tf.train.piecewise_constant(self.epoch, boundaries, values)
 
         # build graph
         # input placeholders
@@ -91,6 +87,8 @@ class RPN3D(object):
                     self.loss = rpn.loss
                     self.reg_loss = rpn.reg_loss
                     self.cls_loss = rpn.cls_loss
+                    self.cls_pos_loss = rpn.cls_pos_loss_rec
+                    self.cls_neg_loss = rpn.cls_neg_loss_rec
                     self.params = tf.trainable_variables()
                     gradients = tf.gradients(self.loss, self.params)
                     clipped_gradients, gradient_norm = tf.clip_by_global_norm(
@@ -137,13 +135,17 @@ class RPN3D(object):
             tf.summary.scalar('train/loss', self.loss),
             tf.summary.scalar('train/reg_loss', self.reg_loss),
             tf.summary.scalar('train/cls_loss', self.cls_loss),
+            tf.summary.scalar('train/cls_pos_loss', self.cls_pos_loss),
+            tf.summary.scalar('train/cls_neg_loss', self.cls_neg_loss),
             *[tf.summary.histogram(each.name, each) for each in self.params]
         ])
 
         self.validate_summary = tf.summary.merge([
             tf.summary.scalar('validate/loss', self.loss),
             tf.summary.scalar('validate/reg_loss', self.reg_loss),
-            tf.summary.scalar('validate/cls_loss', self.cls_loss)
+            tf.summary.scalar('validate/cls_loss', self.cls_loss),
+            tf.summary.scalar('validate/cls_pos_loss', self.cls_pos_loss),
+            tf.summary.scalar('validate/cls_neg_loss', self.cls_neg_loss)
         ])
 
         # TODO: bird_view_summary and front_view_summary
@@ -195,9 +197,9 @@ class RPN3D(object):
                                                                         self.single_batch_size:(idx + 1) * self.single_batch_size]
         if train:
             output_feed = [self.loss, self.reg_loss,
-                           self.cls_loss, self.gradient_norm, self.update]
+                           self.cls_loss, self.cls_pos_loss, self.cls_neg_loss, self.gradient_norm, self.update]
         else:
-            output_feed = [self.loss, self.reg_loss, self.cls_loss]
+            output_feed = [self.loss, self.reg_loss, self.cls_loss, self.cls_pos_loss, self.cls_neg_loss]
         if summary:
             output_feed.append(self.train_summary)
         # TODO: multi-gpu support for test and predict step
@@ -316,12 +318,18 @@ class RPN3D(object):
 
         if summary:
             # only summry 1 in a batch
+            cur_tag = tag[0]
+            P, Tr, R = load_calib( os.path.join( cfg.CALIB_DIR, cur_tag + '.txt' ) )
+            
             front_image = draw_lidar_box3d_on_image(img[0], ret_box3d[0], ret_score[0],
-                                                    batch_gt_boxes3d[0])
+                                                    batch_gt_boxes3d[0], P2=P, T_VELO_2_CAM=Tr, R_RECT_0=R)
+            
             bird_view = lidar_to_bird_view_img(
                 lidar[0], factor=cfg.BV_LOG_FACTOR)
+                
             bird_view = draw_lidar_box3d_on_birdview(bird_view, ret_box3d[0], ret_score[0],
-                                                     batch_gt_boxes3d[0], factor=cfg.BV_LOG_FACTOR)
+                                                     batch_gt_boxes3d[0], factor=cfg.BV_LOG_FACTOR, P2=P, T_VELO_2_CAM=Tr, R_RECT_0=R)
+            
             heatmap = colorize(probs[0, ...], cfg.BV_LOG_FACTOR)
         
             ret_summary = session.run(self.predict_summary, {
@@ -335,12 +343,17 @@ class RPN3D(object):
         if vis:
             front_images, bird_views, heatmaps = [], [], []
             for i in range(len(img)):
+                cur_tag = tag[i]
+                P, Tr, R = load_calib( os.path.join( cfg.CALIB_DIR, cur_tag + '.txt' ) )
+                
                 front_image = draw_lidar_box3d_on_image(img[i], ret_box3d[i], ret_score[i],
-                                                 batch_gt_boxes3d[i])
+                                                 batch_gt_boxes3d[i], P2=P, T_VELO_2_CAM=Tr, R_RECT_0=R)
+                                                 
                 bird_view = lidar_to_bird_view_img(
                                                  lidar[i], factor=cfg.BV_LOG_FACTOR)
+                                                 
                 bird_view = draw_lidar_box3d_on_birdview(bird_view, ret_box3d[i], ret_score[i],
-                                                 batch_gt_boxes3d[i], factor=cfg.BV_LOG_FACTOR)
+                                                 batch_gt_boxes3d[i], factor=cfg.BV_LOG_FACTOR, P2=P, T_VELO_2_CAM=Tr, R_RECT_0=R)
                 
                 heatmap = colorize(probs[i, ...], cfg.BV_LOG_FACTOR)
                 

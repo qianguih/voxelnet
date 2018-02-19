@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# File Name : rpn.py
-# Purpose :
-# Creation Date : 10-12-2017
-# Last Modified : Thu 21 Dec 2017 07:48:05 PM CST
-# Created By : Wei Zhang
-
 import os
 import numpy as np
 import tensorflow as tf

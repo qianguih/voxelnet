@@ -18,11 +18,11 @@ __C = edict()
 cfg = __C
 
 # for dataset dir
-__C.DATA_DIR = '/media/hdc/KITTI/for_voxelnet/cropped_w_img'
+__C.DATA_DIR = '/media/hdc/KITTI/for_voxelnet/cropped_dataset'
+__C.CALIB_DIR = '/media/hdc/KITTI/calib/data_object_calib/training/calib'
 
 # for gpu allocation
-#__C.GPU_AVAILABLE = '1,3'
-__C.GPU_AVAILABLE = '3'
+__C.GPU_AVAILABLE = '0,1'
 __C.GPU_USE_COUNT = len(__C.GPU_AVAILABLE.split(','))
 __C.GPU_MEMORY_FRACTION = 1
 
@@ -56,7 +56,7 @@ else:
     __C.FEATURE_HEIGHT = int(__C.INPUT_HEIGHT / __C.FEATURE_RATIO)
 
 # set the log image scale factor
-__C.BV_LOG_FACTOR = 8
+__C.BV_LOG_FACTOR = 4
 
 # for data set type
 __C.DATA_SETS_TYPE = 'kitti'

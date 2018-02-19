@@ -15,3 +15,6 @@ setup(
     name='box overlaps',
     ext_modules=cythonize('./utils/box_overlaps.pyx')
 )
+
+# solution for potential error related to numpy/arrayobject.h
+# export CFLAGS="-I /home/rcf-40/qianguih/.local/lib/python2.7/site-packages/numpy/core/include $CFLAGS"

@@ -24,6 +24,7 @@ def aug_data(tag, object_dir):
     np.random.seed()
     rgb = cv2.resize(cv2.imread(os.path.join(object_dir,
                                              'image_2', tag + '.png')), (cfg.IMAGE_WIDTH, cfg.IMAGE_HEIGHT))
+    #rgb = cv2.imread( os.path.join(object_dir,'image_2', tag + '.png')  )
     lidar = np.fromfile(os.path.join(object_dir,
                                      'velodyne', tag + '.bin'), dtype=np.float32).reshape(-1, 4)
     label = np.array([line for line in open(os.path.join(
@@ -32,8 +33,9 @@ def aug_data(tag, object_dir):
     gt_box3d = label_to_gt_box3d(np.array(label)[np.newaxis, :], cls='', coordinate='camera')[
         0]  # (N', 7) x, y, z, h, w, l, r
 
-    choice = np.random.randint(1, 10)
-    if choice >= 7:
+    choice = np.random.randint(0, 10)
+    if choice >= 100:
+        # disable this augmention here. current implementation will decrease the performances
         lidar_center_gt_box3d = camera_to_lidar_box(gt_box3d)
         lidar_corner_gt_box3d = center_to_corner_box3d(
             lidar_center_gt_box3d, coordinate='lidar')
@@ -84,7 +86,7 @@ def aug_data(tag, object_dir):
         gt_box3d = lidar_to_camera_box(lidar_center_gt_box3d)
         newtag = 'aug_{}_1_{}'.format(
             tag, np.random.randint(1, 1024))
-    elif choice < 7 and choice >= 4:
+    elif choice < 5:
         # global rotation
         angle = np.random.uniform(-np.pi / 4, np.pi / 4)
         lidar[:, 0:3] = point_transform(lidar[:, 0:3], 0, 0, 0, rz=angle)
