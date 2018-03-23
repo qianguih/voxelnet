@@ -84,21 +84,3 @@ def process_pointcloud(point_cloud, cls=cfg.DETECT_OBJ):
                   'number_buffer': number_buffer}
     return voxel_dict
 
-
-def worker(filelist):
-    for file in filelist:
-        point_cloud = np.fromfile(
-            os.path.join(data_dir, file), dtype=np.float32).reshape(-1, 4)
-
-        name, extension = os.path.splitext(file)
-        voxel_dict = process_pointcloud(point_cloud)
-        output_dir = 'voxel' if cfg.DETECT_OBJ == 'Car' else 'voxel_ped'
-        np.savez_compressed(os.path.join(output_dir, name), **voxel_dict)
-
-
-if __name__ == '__main__':
-    filelist = [f for f in os.listdir(data_dir) if f.endswith('bin')]
-    num_worker = 8
-    for sublist in np.array_split(filelist, num_worker):
-        p = multiprocessing.Process(target=worker, args=(sublist,))
-        p.start()

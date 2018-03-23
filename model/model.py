@@ -23,7 +23,6 @@ class RPN3D(object):
                  max_gradient_norm=5.0,
                  alpha=1.5,
                  beta=1,
-                 is_train=True,
                  avail_gpus=['0']):
         # hyper parameters and status
         self.cls = cls
@@ -43,6 +42,8 @@ class RPN3D(object):
 
         # build graph
         # input placeholders
+        self.is_train = tf.placeholder(tf.bool, name='phase')
+
         self.vox_feature = []
         self.vox_number = []
         self.vox_coordinate = []
@@ -64,9 +65,9 @@ class RPN3D(object):
                     # must use name scope here since we do not want to create new variables
                     # graph
                     feature = FeatureNet(
-                        training=is_train, batch_size=self.single_batch_size)
+                        training=self.is_train, batch_size=self.single_batch_size)
                     rpn = MiddleAndRPN(
-                        input=feature.outputs, alpha=self.alpha, beta=self.beta, training=is_train)
+                        input=feature.outputs, alpha=self.alpha, beta=self.beta, training=self.is_train)
                     tf.get_variable_scope().reuse_variables()
                     # input
                     self.vox_feature.append(feature.feature)
@@ -84,6 +85,9 @@ class RPN3D(object):
                     delta_output = rpn.delta_output
                     prob_output = rpn.prob_output
                     # loss and grad
+                    if idx == 0:
+                        self.extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+
                     self.loss = rpn.loss
                     self.reg_loss = rpn.reg_loss
                     self.cls_loss = rpn.cls_loss
@@ -100,13 +104,18 @@ class RPN3D(object):
                     self.gradient_norm.append(gradient_norm)
                     self.rpn_output_shape = rpn.output_shape
 
+        self.vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+
         # loss and optimizer
         # self.xxxloss is only the loss for the lowest tower
         with tf.device('/gpu:{}'.format(self.avail_gpus[0])):
             self.grads = average_gradients(self.tower_grads)
-            self.update = self.opt.apply_gradients(
-                zip(self.grads, self.params), global_step=self.global_step)
+            self.update = [self.opt.apply_gradients(
+                zip(self.grads, self.params), global_step=self.global_step)]
             self.gradient_norm = tf.group(*self.gradient_norm)
+
+        self.update.extend(self.extra_update_ops)
+        self.update = tf.group(*self.update)
 
         self.delta_output = tf.concat(self.delta_output, axis=0)
         self.prob_output = tf.concat(self.prob_output, axis=0)
@@ -137,7 +146,7 @@ class RPN3D(object):
             tf.summary.scalar('train/cls_loss', self.cls_loss),
             tf.summary.scalar('train/cls_pos_loss', self.cls_pos_loss),
             tf.summary.scalar('train/cls_neg_loss', self.cls_neg_loss),
-            *[tf.summary.histogram(each.name, each) for each in self.params]
+            *[tf.summary.histogram(each.name, each) for each in self.vars + self.params]
         ])
 
         self.validate_summary = tf.summary.merge([
@@ -179,22 +188,17 @@ class RPN3D(object):
             1, 2, 3)).reshape(-1, 1, 1, 1), a_min=1, a_max=None)
 
         input_feed = {}
+        input_feed[self.is_train] = True
         for idx in range(len(self.avail_gpus)):
             input_feed[self.vox_feature[idx]] = vox_feature[idx]
             input_feed[self.vox_number[idx]] = vox_number[idx]
             input_feed[self.vox_coordinate[idx]] = vox_coordinate[idx]
-            input_feed[self.targets[idx]] = targets[idx *
-                                                    self.single_batch_size:(idx + 1) * self.single_batch_size]
-            input_feed[self.pos_equal_one[idx]] = pos_equal_one[idx *
-                                                                self.single_batch_size:(idx + 1) * self.single_batch_size]
-            input_feed[self.pos_equal_one_sum[idx]] = pos_equal_one_sum[idx *
-                                                                        self.single_batch_size:(idx + 1) * self.single_batch_size]
-            input_feed[self.pos_equal_one_for_reg[idx]] = pos_equal_one_for_reg[idx *
-                                                                                self.single_batch_size:(idx + 1) * self.single_batch_size]
-            input_feed[self.neg_equal_one[idx]] = neg_equal_one[idx *
-                                                                self.single_batch_size:(idx + 1) * self.single_batch_size]
-            input_feed[self.neg_equal_one_sum[idx]] = neg_equal_one_sum[idx *
-                                                                        self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.targets[idx]] = targets[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.pos_equal_one[idx]] = pos_equal_one[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.pos_equal_one_sum[idx]] = pos_equal_one_sum[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.pos_equal_one_for_reg[idx]] = pos_equal_one_for_reg[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.neg_equal_one[idx]] = neg_equal_one[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.neg_equal_one_sum[idx]] = neg_equal_one_sum[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
         if train:
             output_feed = [self.loss, self.reg_loss,
                            self.cls_loss, self.cls_pos_loss, self.cls_neg_loss, self.gradient_norm, self.update]
@@ -228,22 +232,17 @@ class RPN3D(object):
             1, 2, 3)).reshape(-1, 1, 1, 1), a_min=1, a_max=None)
 
         input_feed = {}
+        input_feed[self.is_train] = False
         for idx in range(len(self.avail_gpus)):
             input_feed[self.vox_feature[idx]] = vox_feature[idx]
             input_feed[self.vox_number[idx]] = vox_number[idx]
             input_feed[self.vox_coordinate[idx]] = vox_coordinate[idx]
-            input_feed[self.targets[idx]] = targets[idx *
-                                                    self.single_batch_size:(idx + 1) * self.single_batch_size]
-            input_feed[self.pos_equal_one[idx]] = pos_equal_one[idx *
-                                                                self.single_batch_size:(idx + 1) * self.single_batch_size]
-            input_feed[self.pos_equal_one_sum[idx]] = pos_equal_one_sum[idx *
-                                                                        self.single_batch_size:(idx + 1) * self.single_batch_size]
-            input_feed[self.pos_equal_one_for_reg[idx]] = pos_equal_one_for_reg[idx *
-                                                                                self.single_batch_size:(idx + 1) * self.single_batch_size]
-            input_feed[self.neg_equal_one[idx]] = neg_equal_one[idx *
-                                                                self.single_batch_size:(idx + 1) * self.single_batch_size]
-            input_feed[self.neg_equal_one_sum[idx]] = neg_equal_one_sum[idx *
-                                                                        self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.targets[idx]] = targets[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.pos_equal_one[idx]] = pos_equal_one[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.pos_equal_one_sum[idx]] = pos_equal_one_sum[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.pos_equal_one_for_reg[idx]] = pos_equal_one_for_reg[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.neg_equal_one[idx]] = neg_equal_one[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
+            input_feed[self.neg_equal_one_sum[idx]] = neg_equal_one_sum[idx * self.single_batch_size:(idx + 1) * self.single_batch_size]
 
         output_feed = [self.loss, self.reg_loss, self.cls_loss]
         if summary:
@@ -276,6 +275,7 @@ class RPN3D(object):
                 label, cls=self.cls, coordinate='lidar')
         print('predict', tag)
         input_feed = {}
+        input_feed[self.is_train] = False
         for idx in range(len(self.avail_gpus)):
             input_feed[self.vox_feature[idx]] = vox_feature[idx]
             input_feed[self.vox_number[idx]] = vox_number[idx]

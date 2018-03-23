@@ -34,7 +34,7 @@ def aug_data(tag, object_dir):
         0]  # (N', 7) x, y, z, h, w, l, r
 
     choice = np.random.randint(0, 10)
-    if choice >= 100:
+    if choice >= 7:
         # disable this augmention here. current implementation will decrease the performances
         lidar_center_gt_box3d = camera_to_lidar_box(gt_box3d)
         lidar_corner_gt_box3d = center_to_corner_box3d(
@@ -86,7 +86,7 @@ def aug_data(tag, object_dir):
         gt_box3d = lidar_to_camera_box(lidar_center_gt_box3d)
         newtag = 'aug_{}_1_{}'.format(
             tag, np.random.randint(1, 1024))
-    elif choice < 5:
+    elif choice < 7 and choice >= 4:
         # global rotation
         angle = np.random.uniform(-np.pi / 4, np.pi / 4)
         lidar[:, 0:3] = point_transform(lidar[:, 0:3], 0, 0, 0, rz=angle)

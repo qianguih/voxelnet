@@ -55,7 +55,6 @@ if __name__ == '__main__':
             model = RPN3D(
                 cls=cfg.DETECT_OBJ,
                 single_batch_size=args.single_batch_size,
-                is_train=True,
                 avail_gpus=cfg.GPU_AVAILABLE.split(',')
             )
             if tf.train.get_checkpoint_state(save_model_dir):

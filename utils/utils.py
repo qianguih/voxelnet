@@ -267,7 +267,9 @@ def corner_to_center_box3d(boxes_corner, coordinate='camera', T_VELO_2_CAM=None,
                 np.sqrt(np.sum((roi[4, [0, 2]] - roi[5, [0, 2]])**2)) +
                 np.sqrt(np.sum((roi[6, [0, 2]] - roi[7, [0, 2]])**2))
             ) / 4
-            x, y, z = np.sum(roi, axis=0) / 8
+            x = np.sum(roi[:, 0], axis=0)/ 8
+            y = np.sum(roi[0:4, 1], axis=0)/ 4
+            z = np.sum(roi[:, 2], axis=0)/ 8
             ry = np.sum(
                 math.atan2(roi[2, 0] - roi[1, 0], roi[2, 2] - roi[1, 2]) +
                 math.atan2(roi[6, 0] - roi[5, 0], roi[6, 2] - roi[5, 2]) +
@@ -295,7 +297,9 @@ def corner_to_center_box3d(boxes_corner, coordinate='camera', T_VELO_2_CAM=None,
                 np.sqrt(np.sum((roi[4, [0, 2]] - roi[5, [0, 2]])**2)) +
                 np.sqrt(np.sum((roi[6, [0, 2]] - roi[7, [0, 2]])**2))
             )
-            x, y, z = np.sum(roi, axis=0) / 8
+            x = np.sum(roi[:, 0], axis=0)/ 8
+            y = np.sum(roi[0:4, 1], axis=0)/ 4
+            z = np.sum(roi[:, 2], axis=0)/ 8
             ry = np.sum(
                 math.atan2(roi[2, 0] - roi[1, 0], roi[2, 2] - roi[1, 2]) +
                 math.atan2(roi[6, 0] - roi[5, 0], roi[6, 2] - roi[5, 2]) +

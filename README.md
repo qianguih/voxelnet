@@ -66,9 +66,11 @@ Training on two Nvidia 1080 Ti GPUs takes around 3 days (160 epochs as reported 
 $ python3 parse_log.py predictions
 ```
 
+4. There is a pre-trained model for car in `save_model/pre_trained_car`.
+
 
 # Evaluate
-1. run `test.py` to produce final predictions on the validation set.
+1. run `test.py -n default` to produce final predictions on the validation set after training is done. Change `-n` flag to `pre_trained_car` will start testing for the pre-trained model (only car model provided for now).
 ```bash
 $ python3 test.py
 ```
@@ -88,14 +90,14 @@ The current implementation and training scheme are able to produce results in th
 | Car | Easy | Moderate | Hard |
 |:-:|:-:|:-:|:-:|
 | Reported | 89.60 | 84.81 | 78.57 |
-| Reproduced | 86.98  | 84.65  | 77.95 |
+| Reproduced | 87.99  | 84.59  | 78.27 |
 
 ##### 3D detection performance: AP on KITTI validation set
 
 | Car | Easy | Moderate | Hard |
 |:-:|:-:|:-:|:-:|
 | Reported | 81.97 | 65.46 | 62.85 |
-| Reproduced | 80.48  | 69.93 | 64.83 |
+| Reproduced | 84.19  | 72.23 | 67.03 |
 
 The learning curve (validation performances vs epoches) is presented below:
 <p align=center><img width="90%" src="img/learning_curve.jpg" /></p>

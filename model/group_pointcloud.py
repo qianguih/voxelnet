@@ -60,17 +60,12 @@ class FeatureNet(object):
         with tf.variable_scope(name, reuse=tf.AUTO_REUSE) as scope:
             self.vfe1 = VFELayer(32, 'VFE-1')
             self.vfe2 = VFELayer(128, 'VFE-2')
-            #self.dense = tf.layers.Dense(
-            #    128, tf.nn.relu, name='dense', _reuse=tf.AUTO_REUSE, _scope=scope)
-            #self.batch_norm = tf.layers.BatchNormalization(
-            #    name='batch_norm', fused=True, _reuse=tf.AUTO_REUSE, _scope=scope)
+
         # boolean mask [K, T, 2 * units]
         mask = tf.not_equal(tf.reduce_max(
             self.feature, axis=2, keep_dims=True), 0)
         x = self.vfe1.apply(self.feature, mask, self.training)
         x = self.vfe2.apply(x, mask, self.training)
-        #x = self.dense.apply(x)
-        #x = self.batch_norm.apply(x, self.training)
 
         # [ΣK, 128]
         voxelwise = tf.reduce_max(x, axis=1)
@@ -81,99 +76,3 @@ class FeatureNet(object):
             self.coordinate, voxelwise, [self.batch_size, 10, cfg.INPUT_HEIGHT, cfg.INPUT_WIDTH, 128])
 
 
-def build_input(voxel_dict_list):
-    batch_size = len(voxel_dict_list)
-
-    feature_list = []
-    number_list = []
-    coordinate_list = []
-    for i, voxel_dict in zip(range(batch_size), voxel_dict_list):
-        feature_list.append(voxel_dict['feature_buffer'])
-        number_list.append(voxel_dict['number_buffer'])
-        coordinate = voxel_dict['coordinate_buffer']
-        coordinate_list.append(
-            np.pad(coordinate, ((0, 0), (1, 0)),
-                   mode='constant', constant_values=i))
-
-    feature = np.concatenate(feature_list)
-    number = np.concatenate(number_list)
-    coordinate = np.concatenate(coordinate_list)
-    return batch_size, feature, number, coordinate
-
-
-def run(batch_size, feature, number, coordinate):
-    """
-    Input:
-        batch_size: scalar, the batch size
-        feature: [ΣK, T, 7], voxel input feature buffer
-        number: [ΣK], number of points in each voxel
-        coordinate: [ΣK, 4], voxel coordinate buffer
-
-        A feature tensor feature[i] has number[i] points in it and is located in
-        coordinate[i] (a 1-D tensor reprents [batch, d, h, w]) in the output
-
-        Input format is similiar to what's described in section 2.3 of the paper
-
-        Suppose the batch size is 3, the 3 point cloud is loaded as
-        1. feature: [K1, T, 7] (K1 is the number of non-empty voxels)
-           number: [K1] (number of points in the corresponding voxel)
-           coordinate: [K1, 3] (each row is a tensor reprents [d, h, w])
-        2. feature: [K2, T, 7]
-           number: [K2]
-           coordinate: [K2, 3]
-        3. feature: [K3, T, 7]
-           number: [K3]
-           coordinate: [K3, 3]
-        Then the corresponding input is
-        batch_size: 3
-        feature: [K1 + K2 + K3, T, 7]
-        number: [K1 + K2 + K3]
-        coordinate: [K1 + K2 + K3, 4] (need to append the batch index of the
-                                       corresponding voxel in front of each row)
-    Output:
-        outputs: [batch_size, 10, 400, 352, 128]
-    """
-    gpu_options = tf.GPUOptions(visible_device_list='0,2,3')
-    config = tf.ConfigProto(
-        gpu_options=gpu_options,
-        device_count={'GPU': 3}
-    )
-
-    with tf.Session(config=config) as sess:
-        model = FeatureNet(training=False, batch_size=batch_size)
-        tf.global_variables_initializer().run()
-        for i in range(10):
-            time_start = time.time()
-            feed = {model.feature: feature,
-                    model.number: number,
-                    model.coordinate: coordinate}
-            outputs = sess.run([model.outputs], feed)
-            print(outputs[0].shape)
-            time_end = time.time()
-            print(time_end - time_start)
-
-
-def main():
-    data_dir = './data/object/training/voxel'
-    batch_size = 32
-
-    filelist = [f for f in os.listdir(data_dir) if f.endswith('npz')]
-
-    import time
-    voxel_dict_list = []
-    for id in range(0, len(filelist), batch_size):
-        pre_time = time.time()
-        batch_file = [f for f in filelist[id:id + batch_size]]
-        voxel_dict_list = []
-        for file in batch_file:
-            voxel_dict_list.append(np.load(os.path.join(data_dir, file)))
-
-        # example input with batch size 16
-        batch_size, feature, number, coordinate = build_input(voxel_dict_list)
-        print(time.time() - pre_time)
-
-    run(batch_size, feature, number, coordinate)
-
-
-if __name__ == '__main__':
-    main()

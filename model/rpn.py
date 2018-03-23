@@ -91,10 +91,10 @@ class MiddleAndRPN:
             temp_conv = tf.concat([deconv3, deconv2, deconv1], -1)
             # Probability score map, scale = [None, 200/100, 176/120, 2]
             p_map = ConvMD(2, 768, 2, 1, (1, 1), (0, 0), temp_conv,
-                           training=self.training, name='conv20')
+                           training=self.training, activation=False, bn=False, name='conv20')
             # Regression(residual) map, scale = [None, 200/100, 176/120, 14]
             r_map = ConvMD(2, 768, 14, 1, (1, 1), (0, 0),
-                           temp_conv, training=self.training, activation=False, name='conv21')
+                           temp_conv, training=self.training, activation=False, bn=False, name='conv21')
             # softmax output for positive anchor and negative anchor, scale = [None, 200/100, 176/120, 1]
             self.p_pos = tf.sigmoid(p_map)
             #self.p_pos = tf.nn.softmax(p_map, dim=3)
@@ -132,7 +132,7 @@ def smooth_l1(deltas, targets, sigma=3.0):
     return smooth_l1
 
 
-def ConvMD(M, Cin, Cout, k, s, p, input, training=True, activation=True, name='conv'):
+def ConvMD(M, Cin, Cout, k, s, p, input, training=True, activation=True, bn=True, name='conv'):
     temp_p = np.array(p)
     temp_p = np.lib.pad(temp_p, (1, 1), 'constant', constant_values=(0, 0))
     with tf.variable_scope(name) as scope:
@@ -146,14 +146,15 @@ def ConvMD(M, Cin, Cout, k, s, p, input, training=True, activation=True, name='c
             pad = tf.pad(input, paddings, "CONSTANT")
             temp_conv = tf.layers.conv3d(
                 pad, Cout, k, strides=s, padding="valid", reuse=tf.AUTO_REUSE, name=scope)
-        temp_conv = tf.layers.batch_normalization(
-            temp_conv, axis=-1, fused=True, training=training, reuse=tf.AUTO_REUSE, name=scope)
+        if bn:
+            temp_conv = tf.layers.batch_normalization(
+                temp_conv, axis=-1, fused=True, training=training, reuse=tf.AUTO_REUSE, name=scope)
         if activation:
             return tf.nn.relu(temp_conv)
         else:
             return temp_conv
 
-def Deconv2D(Cin, Cout, k, s, p, input, training=True, name='deconv'):
+def Deconv2D(Cin, Cout, k, s, p, input, training=True, bn=True, name='deconv'):
     temp_p = np.array(p)
     temp_p = np.lib.pad(temp_p, (1, 1), 'constant', constant_values=(0, 0))
     paddings = (np.array(temp_p)).repeat(2).reshape(4, 2)
@@ -161,8 +162,9 @@ def Deconv2D(Cin, Cout, k, s, p, input, training=True, name='deconv'):
     with tf.variable_scope(name) as scope:
         temp_conv = tf.layers.conv2d_transpose(
             pad, Cout, k, strides=s, padding="SAME", reuse=tf.AUTO_REUSE, name=scope)
-        temp_conv = tf.layers.batch_normalization(
-            temp_conv, axis=-1, fused=True, training=training, reuse=tf.AUTO_REUSE, name=scope)
+        if bn:
+            temp_conv = tf.layers.batch_normalization(
+                temp_conv, axis=-1, fused=True, training=training, reuse=tf.AUTO_REUSE, name=scope)
         return tf.nn.relu(temp_conv)
 
 

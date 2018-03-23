@@ -28,9 +28,9 @@ parser.add_argument('-b', '--single-batch-size', type=int, nargs='?', default=2,
                     help='set batch size')
 parser.add_argument('-l', '--lr', type=float, nargs='?', default=0.001,
                     help='set learning rate')
-parser.add_argument('-al', '--alpha', type=float, nargs='?', default=1.5,
+parser.add_argument('-al', '--alpha', type=float, nargs='?', default=1.0,
                     help='set alpha in los function')
-parser.add_argument('-be', '--beta', type=float, nargs='?', default=1.0,
+parser.add_argument('-be', '--beta', type=float, nargs='?', default=10.0,
                     help='set beta in los function')
 parser.add_argument('--output-path', type=str, nargs='?',
                     default='./predictions', help='results output dir')
@@ -71,7 +71,6 @@ def main(_):
                 single_batch_size=args.single_batch_size,
                 learning_rate=args.lr,
                 max_gradient_norm=5.0,
-                is_train=True,
                 alpha=args.alpha,
                 beta=args.beta,
                 avail_gpus=cfg.GPU_AVAILABLE.split(',')
@@ -98,6 +97,7 @@ def main(_):
             # training
             for epoch in range(start_epoch, args.max_epoch):
                 counter = 0
+                batch_time = time.time()
                 for batch in iterate_data(train_dir, shuffle=True, aug=True, is_testset=False, batch_size=args.single_batch_size * cfg.GPU_USE_COUNT, multi_gpu_sum=cfg.GPU_USE_COUNT):
                     
                     counter += 1
@@ -110,11 +110,13 @@ def main(_):
                     
                     start_time = time.time()
                     ret = model.train_step( sess, batch, train=True, summary = is_summary )
-                    times = time.time() - start_time
+                    forward_time = time.time() - start_time
+                    batch_time = time.time() - batch_time
+
                     
-                    print('train: {} @ epoch:{}/{} loss: {:.4f} reg_loss: {:.4f} cls_loss: {:.4f} cls_pos_loss: {:.4f} cls_neg_loss: {:.4f} time: {:.4f}'.format(counter,epoch, args.max_epoch, ret[0], ret[1], ret[2], ret[3], ret[4], times))
+                    print('train: {} @ epoch:{}/{} loss: {:.4f} reg_loss: {:.4f} cls_loss: {:.4f} cls_pos_loss: {:.4f} cls_neg_loss: {:.4f} forward time: {:.4f} batch time: {:.4f}'.format(counter,epoch, args.max_epoch, ret[0], ret[1], ret[2], ret[3], ret[4], forward_time, batch_time))
                     with open('log/train.txt', 'a') as f:
-                        f.write( 'train: {} @ epoch:{}/{} loss: {:.4f} reg_loss: {:.4f} cls_loss: {:.4f} cls_pos_loss: {:.4f} cls_neg_loss: {:.4f} time: {:.4f} \n'.format(counter, epoch, args.max_epoch, ret[0], ret[1], ret[2], ret[3], ret[4], times) )
+                        f.write( 'train: {} @ epoch:{}/{} loss: {:.4f} reg_loss: {:.4f} cls_loss: {:.4f} cls_pos_loss: {:.4f} cls_neg_loss: {:.4f} forward time: {:.4f} batch time: {:.4f} \n'.format(counter, epoch, args.max_epoch, ret[0], ret[1], ret[2], ret[3], ret[4], forward_time, batch_time) )
                     
                     #print(counter, summary_interval, counter % summary_interval)
                     if counter % summary_interval == 0:
@@ -139,6 +141,8 @@ def main(_):
                         model.saver.save(sess, os.path.join(save_model_dir, 'checkpoint'), global_step=model.global_step)
                         print('pause and save model @ {} steps:{}'.format(save_model_dir, model.global_step.eval()))
                         sys.exit(0)
+                            
+                    batch_time = time.time()
                 
                 sess.run(model.epoch_add_op)
                 
