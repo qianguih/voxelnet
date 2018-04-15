@@ -90,18 +90,14 @@ The current implementation and training scheme are able to produce results in th
 | Car | Easy | Moderate | Hard |
 |:-:|:-:|:-:|:-:|
 | Reported | 89.60 | 84.81 | 78.57 |
-| Reproduced | 87.99  | 84.59  | 78.27 |
+| Reproduced | 85.41  | 83.16  | 77.10 |
 
 ##### 3D detection performance: AP on KITTI validation set
 
 | Car | Easy | Moderate | Hard |
 |:-:|:-:|:-:|:-:|
 | Reported | 81.97 | 65.46 | 62.85 |
-| Reproduced | 84.19  | 72.23 | 67.03 |
-
-The learning curve (validation performances vs epoches) is presented below:
-<p align=center><img width="90%" src="img/learning_curve.jpg" /></p>
-
+| Reproduced | 53.43  | 48.78 | 48.06 |
 
 # TODO
 - [X] improve the performances
