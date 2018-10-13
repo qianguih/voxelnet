@@ -92,7 +92,7 @@ for frame in range(0, 7481):
 
     points = align_img_and_pc(img_dir, pc_dir, calib_dir)
     
-    output_name = PC_ROOT + frame + '.bin'
+    output_name = '%06d.bin' % frame
     points[:,:4].astype('float32').tofile(output_name)
 
 
