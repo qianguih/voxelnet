@@ -19,7 +19,7 @@ cfg = __C
 
 # for dataset dir
 __C.DATA_DIR = '/media/hdc/KITTI/for_voxelnet/cropped_dataset'
-__C.CALIB_DIR = '/media/hdc/KITTI/calib/data_object_calib/training/calib'
+__C.CALIB_DIR = '/home/pgreazy/Projects/voxelnet/data/training/calib'
 
 
 # for gpu allocation

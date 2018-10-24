@@ -1,4 +1,4 @@
-# crooped gt dir
+# cropped gt dir
 GT_DIR=/media/hdc/KITTI/for_voxelnet/cropped_dataset/validation/label_2
 # pred dir
 PRED_DIR=$1
