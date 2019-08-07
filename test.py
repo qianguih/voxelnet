@@ -76,7 +76,8 @@ if __name__ == '__main__':
                 for tag, result in zip(tags, results):
                     of_path = os.path.join(args.output_path, 'data', tag + '.txt')
                     with open(of_path, 'w+') as f:
-                        labels = box3d_to_label([result[:, 1:8]], [result[:, 0]], [result[:, -1]], coordinate='lidar')[0]
+                        P, Tr, R = load_calib(os.path.join( cfg.CALIB_DIR.replace("training","validation"), tag + '.txt') )
+                        labels = box3d_to_label([result[:, 1:8]], [result[:, 0]], [result[:, -1]], coordinate='lidar',P2 =P, T_VELO_2_CAM=Tr, R_RECT_0=R)[0]
                         for line in labels:
                             f.write(line)
                         print('write out {} objects to {}'.format(len(labels), tag))
