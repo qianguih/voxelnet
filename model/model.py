@@ -178,8 +178,20 @@ class RPN3D(object):
         vox_number = data[3]
         vox_coordinate = data[4]
         print('train', tag)
+        # Load the matrices of the current data samples: 
+        P,Tr,R = [], [], []
+        for ta in tag:
+            if "aug" in ta: 
+                tt = ta[4:10]
+            else:
+                tt = ta
+            Pi, Tri, Ri = load_calib( os.path.join( cfg.CALIB_DIR, tt + '.txt' ) ) 
+            P.append(Pi)
+            Tr.append(Tri)
+            R.append(Ri)
+
         pos_equal_one, neg_equal_one, targets = cal_rpn_target(
-            label, self.rpn_output_shape, self.anchors, cls=cfg.DETECT_OBJ, coordinate='lidar')
+            label, self.rpn_output_shape, self.anchors, cls=cfg.DETECT_OBJ, coordinate='lidar',T_VELO_2_CAM=Tr, R_RECT_0=R)
         pos_equal_one_for_reg = np.concatenate(
             [np.tile(pos_equal_one[..., [0]], 7), np.tile(pos_equal_one[..., [1]], 7)], axis=-1)
         pos_equal_one_sum = np.clip(np.sum(pos_equal_one, axis=(
@@ -269,10 +281,12 @@ class RPN3D(object):
         vox_coordinate = data[4]
         img = data[5]
         lidar = data[6]
-
+        # Currently the prediction does not support batches
+        P, Tr, R = load_calib( os.path.join( cfg.CALIB_DIR.replace("training","validation"), tag[0] + '.txt' ) )
+        
         if summary or vis:
             batch_gt_boxes3d = label_to_gt_box3d(
-                label, cls=self.cls, coordinate='lidar')
+                label, cls=self.cls, coordinate='lidar', T_VELO_2_CAM=[Tr], R_RECT_0=[R])
         print('predict', tag)
         input_feed = {}
         input_feed[self.is_train] = False
@@ -320,7 +334,7 @@ class RPN3D(object):
             # only summry 1 in a batch
             cur_tag = tag[0]
             P, Tr, R = load_calib( os.path.join( cfg.CALIB_DIR, cur_tag + '.txt' ) )
-            
+
             front_image = draw_lidar_box3d_on_image(img[0], ret_box3d[0], ret_score[0],
                                                     batch_gt_boxes3d[0], P2=P, T_VELO_2_CAM=Tr, R_RECT_0=R)
             

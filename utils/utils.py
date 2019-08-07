@@ -11,6 +11,8 @@ from numba import jit
 from config import cfg
 from utils.box_overlaps import *
 
+# Global variable: Allow the use of fixed P Tr matrices
+ALLOW_FIXED_MATRICES = False
 
 #-- util function to load calib matrices
 CAM = 2
@@ -69,9 +71,13 @@ def angle_in_limit(angle):
 
 def camera_to_lidar(x, y, z, T_VELO_2_CAM=None, R_RECT_0=None):
     if type(T_VELO_2_CAM) == type(None):
+        if ALLOW_FIXED_MATRICES == False:
+            raise ValueError('Not allowed to use fixed matrix')
         T_VELO_2_CAM = np.array(cfg.MATRIX_T_VELO_2_CAM)
     
     if type(R_RECT_0) == type(None):
+        if ALLOW_FIXED_MATRICES == False:
+            raise ValueError('Not allowed to use fixed matrix')
         R_RECT_0 = np.array(cfg.MATRIX_R_RECT_0)
 
     p = np.array([x, y, z, 1])
@@ -101,9 +107,13 @@ def camera_to_lidar_point(points, T_VELO_2_CAM=None, R_RECT_0=None):
     points = np.hstack([points, np.ones((N, 1))]).T  # (N,4) -> (4,N)
 
     if type(T_VELO_2_CAM) == type(None):
+        if ALLOW_FIXED_MATRICES == False:
+            raise ValueError('Not allowed to use fixed matrix')
         T_VELO_2_CAM = np.array(cfg.MATRIX_T_VELO_2_CAM)
     
     if type(R_RECT_0) == type(None):
+        if ALLOW_FIXED_MATRICES == False:
+            raise ValueError('Not allowed to use fixed matrix')
         R_RECT_0 = np.array(cfg.MATRIX_R_RECT_0)
 
     points = np.matmul(np.linalg.inv(R_RECT_0), points)
@@ -119,9 +129,13 @@ def lidar_to_camera_point(points, T_VELO_2_CAM=None, R_RECT_0=None):
     
     
     if type(T_VELO_2_CAM) == type(None):
+        if ALLOW_FIXED_MATRICES == False:
+            raise ValueError('Not allowed to use fixed matrix')
         T_VELO_2_CAM = np.array(cfg.MATRIX_T_VELO_2_CAM)
     
     if type(R_RECT_0) == type(None):
+        if ALLOW_FIXED_MATRICES == False:
+            raise ValueError('Not allowed to use fixed matrix')
         R_RECT_0 = np.array(cfg.MATRIX_R_RECT_0)
 
     points = np.matmul(T_VELO_2_CAM, points)
@@ -163,7 +177,6 @@ def center_to_corner_box2d(boxes_center, coordinate='lidar', T_VELO_2_CAM=None, 
         boxes3d_center, coordinate=coordinate, T_VELO_2_CAM=T_VELO_2_CAM, R_RECT_0=R_RECT_0)
 
     return boxes3d_corner[:, 0:4, 0:2]
-
 
 def center_to_corner_box3d(boxes_center, coordinate='lidar', T_VELO_2_CAM=None, R_RECT_0=None):
     # (N, 7) -> (N, 8, 3)
@@ -329,6 +342,9 @@ def lidar_box3d_to_camera_box(boxes3d, cal_projection=False, P2 = None, T_VELO_2
 
     lidar_boxes3d_corner = center_to_corner_box3d(boxes3d, coordinate='lidar', T_VELO_2_CAM=T_VELO_2_CAM, R_RECT_0=R_RECT_0)
     if type(P2) == type(None):
+        if ALLOW_FIXED_MATRICES == False:
+            raise ValueError('Not allowed to use fixed matrix')
+
         P2 = np.array(cfg.MATRIX_P2)
 
     for n in range(num):
@@ -479,7 +495,7 @@ def label_to_gt_box3d(labels, cls='Car', coordinate='camera', T_VELO_2_CAM=None,
     else: # all
         acc_cls = []
 
-    for label in labels:
+    for counter,label in enumerate(labels):
         boxes3d_a_label = []
         for line in label:
             ret = line.split()
@@ -488,7 +504,7 @@ def label_to_gt_box3d(labels, cls='Car', coordinate='camera', T_VELO_2_CAM=None,
                 box3d = np.array([x, y, z, h, w, l, r])
                 boxes3d_a_label.append(box3d)
         if coordinate == 'lidar':
-            boxes3d_a_label = camera_to_lidar_box(np.array(boxes3d_a_label), T_VELO_2_CAM, R_RECT_0)
+            boxes3d_a_label = camera_to_lidar_box(np.array(boxes3d_a_label), T_VELO_2_CAM[counter], R_RECT_0[counter])
 
         boxes3d.append(np.array(boxes3d_a_label).reshape(-1, 7))
     return boxes3d
@@ -567,7 +583,7 @@ def cal_anchors():
     return anchors
 
 
-def cal_rpn_target(labels, feature_map_shape, anchors, cls='Car', coordinate='lidar'):
+def cal_rpn_target(labels, feature_map_shape, anchors, cls='Car', coordinate='lidar', T_VELO_2_CAM=None, R_RECT_0=None):
     # Input:
     #   labels: (N, N')
     #   feature_map_shape: (w, l)
@@ -578,7 +594,7 @@ def cal_rpn_target(labels, feature_map_shape, anchors, cls='Car', coordinate='li
     #   targets (N, w, l, 14)
     # attention: cal IoU on birdview
     batch_size = labels.shape[0]
-    batch_gt_boxes3d = label_to_gt_box3d(labels, cls=cls, coordinate=coordinate)
+    batch_gt_boxes3d = label_to_gt_box3d(labels, cls=cls, coordinate=coordinate,T_VELO_2_CAM=T_VELO_2_CAM, R_RECT_0=R_RECT_0)
     # defined in eq(1) in 2.2
     anchors_reshaped = anchors.reshape(-1, 7)
     anchors_d = np.sqrt(anchors_reshaped[:, 4]**2 + anchors_reshaped[:, 5]**2)
@@ -726,7 +742,7 @@ def point_transform(points, tx, ty, tz, rx=0, ry=0, rz=0):
     return points[:, 0:3]
 
 
-def box_transform(boxes, tx, ty, tz, r=0, coordinate='lidar'):
+def box_transform(boxes, tx, ty, tz, r=0, coordinate='lidar', T_VELO_2_CAM=None, R_RECT_0=None):
     # Input:
     #   boxes: (N, 7) x y z h w l rz/y
     # Output:
@@ -741,7 +757,7 @@ def box_transform(boxes, tx, ty, tz, r=0, coordinate='lidar'):
             boxes_corner[idx] = point_transform(
                 boxes_corner[idx], tx, ty, tz, ry=r)
 
-    return corner_to_center_box3d(boxes_corner, coordinate=coordinate)
+    return corner_to_center_box3d(boxes_corner, coordinate=coordinate, T_VELO_2_CAM=T_VELO_2_CAM, R_RECT_0=R_RECT_0)
 
 
 def cal_iou2d(box1, box2, T_VELO_2_CAM=None, R_RECT_0=None):

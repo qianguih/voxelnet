@@ -91,8 +91,9 @@ for frame in range(0, 7481):
     calib_dir = CALIB_ROOT + '%06d.txt' % frame
 
     points = align_img_and_pc(img_dir, pc_dir, calib_dir)
-    
-    output_name = PC_ROOT + frame + '.bin'
+    l = str(frame)
+    l = "0"*(6-len(l)) +l
+    output_name = PC_ROOT + l + '.bin'
     points[:,:4].astype('float32').tofile(output_name)
 
 

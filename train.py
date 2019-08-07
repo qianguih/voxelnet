@@ -54,7 +54,6 @@ def main(_):
         global save_model_dir
         start_epoch = 0
         global_counter = 0
-
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=cfg.GPU_MEMORY_FRACTION,
                                     visible_device_list=cfg.GPU_AVAILABLE,
                                     allow_growth=True)
@@ -119,12 +118,12 @@ def main(_):
                         f.write( 'train: {} @ epoch:{}/{} loss: {:.4f} reg_loss: {:.4f} cls_loss: {:.4f} cls_pos_loss: {:.4f} cls_neg_loss: {:.4f} forward time: {:.4f} batch time: {:.4f} \n'.format(counter, epoch, args.max_epoch, ret[0], ret[1], ret[2], ret[3], ret[4], forward_time, batch_time) )
                     
                     #print(counter, summary_interval, counter % summary_interval)
-                    if counter % summary_interval == 0:
+                    if counter % summary_interval == 0 and False: # Momentaneously this is skipped
                         print("summary_interval now")
                         summary_writer.add_summary(ret[-1], global_counter)
                             
                     #print(counter, summary_val_interval, counter % summary_val_interval)
-                    if counter % summary_val_interval == 0:
+                    if counter % summary_val_interval == 0 and False: # Momentaneously this is skipped
                         print("summary_val_interval now")
                         batch = sample_test_data(val_dir, args.single_batch_size * cfg.GPU_USE_COUNT, multi_gpu_sum=cfg.GPU_USE_COUNT)
                         
