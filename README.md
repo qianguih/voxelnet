@@ -12,16 +12,20 @@ This is an unofficial inplementation of [VoxelNet: End-to-End Learning for Point
 
 # Installation
 1. Clone this repository.
-2. Compile the Cython module
+2. Install the necessary packages 
+```bash
+$ cat packages.txt | xargs sudo apt-get install
+```
+3. Compile the Cython module
 ```bash
 $ python3 setup.py build_ext --inplace
 ```
-3. Compile the evaluation code
+4. Compile the evaluation code
 ```bash
 $ cd kitti_eval
 $ g++ -o evaluate_object_3d_offline evaluate_object_3d_offline.cpp
 ```
-4. grant the execution permission to evaluation script
+5. grant the execution permission to evaluation script
 ```bash
 $ cd kitti_eval
 $ chmod +x launch_test.sh
