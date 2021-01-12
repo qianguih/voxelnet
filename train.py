@@ -89,14 +89,14 @@ def main(_):
                 global_counter = model.global_step.eval() + 1
             else:
                 print("Created model with fresh parameters.")
-                tf.global_variables_initializer().run()
+                tf.compat.v1.global_variables_initializer().run()
 
             # train and validate
             is_summary, is_summary_image, is_validate = False, False, False
 
             summary_interval = 5
             summary_val_interval = 10
-            summary_writer = tf.summary.FileWriter(log_dir, sess.graph)
+            summary_writer = tf.compat.v1.summary.FileWriter(log_dir, sess.graph)
 
 
             # training
