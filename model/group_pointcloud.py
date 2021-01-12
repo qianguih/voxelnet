@@ -25,7 +25,7 @@ class VFELayer(object):
         pointwise = self.batch_norm.apply(self.dense.apply(inputs), training)
 
         #n [K, 1, units]
-        aggregated = tf.reduce_max(pointwise, axis=1, keep_dims=True)
+        aggregated = tf.reduce_max(pointwise, axis=1, keepdims=True)
 
         # [K, T, units]
         repeated = tf.tile(aggregated, [1, cfg.VOXEL_POINT_COUNT, 1])
