@@ -63,7 +63,7 @@ class FeatureNet(object):
 
         # boolean mask [K, T, 2 * units]
         mask = tf.compat.v1.not_equal(tf.reduce_max(
-            self.feature, axis=2, keep_dims=True), 0)
+            self.feature, axis=2, keepdims=True), 0)
         x = self.vfe1.apply(self.feature, mask, self.training)
         x = self.vfe2.apply(x, mask, self.training)
 
