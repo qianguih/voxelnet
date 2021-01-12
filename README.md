@@ -14,7 +14,8 @@ This is an unofficial inplementation of [VoxelNet: End-to-End Learning for Point
 1. Clone this repository.
 2. Install the necessary packages 
 ```bash
-$ cat packages.txt | xargs sudo apt-get install
+$ sudo apt-get install libboost-all-dev
+$ sudo apt-get install python-numpy
 ```
 3. Compile the Cython module
 ```bash
