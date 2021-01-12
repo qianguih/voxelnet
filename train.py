@@ -197,4 +197,5 @@ def main(_):
 
 
 if __name__ == '__main__':
-    tf.app.run(main)
+    #tf.app.run(main)
+    tf.compat.v1.app.run(main)
