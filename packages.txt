@@ -1,2 +1,0 @@
-libboost-all-dev
-python-numpy
