@@ -52,7 +52,7 @@ class FeatureNet(object):
         self.feature = tf.compat.v1.placeholder(
             tf.float32, [None, cfg.VOXEL_POINT_COUNT, 7], name='feature')
         # [ΣK]
-        self.number = tf.compat.v1.compat.v1.placeholder(tf.int64, [None], name='number')
+        self.number = tf.compat.v1.placeholder(tf.int64, [None], name='number')
         # [ΣK, 4], each row stores (batch, d, h, w)
         self.coordinate = tf.compat.v1.placeholder(
             tf.int64, [None, 4], name='coordinate')
