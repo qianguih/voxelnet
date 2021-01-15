@@ -161,7 +161,7 @@ class RPN3D(object):
 
         self.predict_summary = tf.compat.v1.summary.merge([
             tf.compat.v1.summary.image('predict/bird_view_lidar', self.bv),
-            tf.compat.v1.compat.v1.summary.image('predict/bird_view_heatmap', self.bv_heatmap),
+            tf.compat.v1.summary.image('predict/bird_view_heatmap', self.bv_heatmap),
             tf.compat.v1.summary.image('predict/front_view_rgb', self.rgb),
         ])
 
