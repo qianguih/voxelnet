@@ -40,6 +40,10 @@ parser.add_argument('-v', '--vis', type=bool, nargs='?', default=False,
                     help='set the flag to True if dumping visualizations')
 args = parser.parse_args()
 
+# Used to parse command line arguments as the name suggests. 
+#Links
+#Documentation-https://docs.python.org/3/library/argparse.html
+#Easier explanation-https://mkaz.blog/code/python-argparse-cookbook/
 
 dataset_dir = cfg.DATA_DIR
 train_dir = os.path.join(cfg.DATA_DIR, 'training')
