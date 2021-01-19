@@ -56,8 +56,8 @@ os.makedirs(save_model_dir, exist_ok=True)
 
 def main(_):
     # TODO: split file support
-    with tf.Graph().as_default():
-        global save_model_dir
+    with tf.Graph().as_default():      #tf.Graph and Session explained-https://www.easy-tensorflow.com/tf-tutorials/basics/graph-and-session
+        global save_model_dir          # Also- "https://www.easy-tensorflow.com/tf-tutorials/basics/graph-and-session" for as_default() function.
         start_epoch = 0
         global_counter = 0
 
