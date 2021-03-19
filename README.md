@@ -66,6 +66,10 @@ Note that the hyper-parameter settings introduced in the paper are not able to p
 
 Training on two Nvidia 1080 Ti GPUs takes around 3 days (160 epochs as reported in the paper). During training, training statistics are recorded in `log/default`, which can be monitored by tensorboard. And models are saved in `save_model/default`. Intermediate validation results will be dumped into the folder `predictions/XXX/data` with `XXX` as the epoch number. And metrics will be calculated and saved in  `predictions/XXX/log`. If the `--vis` flag is set to be `True`, visualizations of intermediate results will be dumped in the folder `predictions/XXX/vis`.
 
+3. When the testing is done, executing `parse_log.py` will generate the learning curve.
+```bash
+$ python3 parse_log.py predictions
+```
 
 # Evaluate
 1. run `test.py -n default` to produce final predictions on the validation set after training is done. Change `-n` flag to `pre_trained_car` will start testing for the pre-trained model (only car model provided for now).
@@ -77,11 +81,6 @@ results will be dumped into `predictions/data`. Set the `--vis` flag to True if 
 2. run the following command to measure quantitative performances of predictions:
 ```bash
 $ ./kitti_eval/evaluate_object_3d_offline [DATA_DIR]/validation/label_2 ./predictions
-```
-
-3. When the testing is done, executing `parse_log.py` will generate the learning curve.
-```bash
-$ python3 parse_log.py predictions
 ```
 
 # Performances
