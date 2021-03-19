@@ -66,7 +66,7 @@ Note that the hyper-parameter settings introduced in the paper are not able to p
 
 Training on two Nvidia 1080 Ti GPUs takes around 3 days (160 epochs as reported in the paper). During training, training statistics are recorded in `log/default`, which can be monitored by tensorboard. And models are saved in `save_model/default`. Intermediate validation results will be dumped into the folder `predictions/XXX/data` with `XXX` as the epoch number. And metrics will be calculated and saved in  `predictions/XXX/log`. If the `--vis` flag is set to be `True`, visualizations of intermediate results will be dumped in the folder `predictions/XXX/vis`.
 
-3. When the testing is done, executing `parse_log.py` will generate the learning curve.
+3. When the training is done, executing `parse_log.py` will generate the learning curve.
 ```bash
 $ python3 parse_log.py predictions
 ```
