@@ -484,7 +484,7 @@ def label_to_gt_box3d(labels, cls='Car', coordinate='camera', T_VELO_2_CAM=None,
         for line in label:
             ret = line.split()
             if ret[0] in acc_cls or acc_cls == []:
-                h, w, l, x, y, z, r = [float(i) for i in ret[-7:]]
+                h, w, l, x, y, z, r = [float(i) for i in ret[8:15]]
                 box3d = np.array([x, y, z, h, w, l, r])
                 boxes3d_a_label.append(box3d)
         if coordinate == 'lidar':

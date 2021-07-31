@@ -61,13 +61,12 @@ RANGE = range(len(det_bv[0]))
 
 plt.figure(figsize=(10, 7))
 
-plt.plot( RANGE,  det_3d[0] , linestyle=linestyles['solid'], linewidth=1.5, color=tableau20[0] )
-plt.plot( RANGE,  det_3d[1] , linestyle=linestyles['solid'], linewidth=1.5, color=tableau20[2] )
-plt.plot( RANGE,  det_3d[2] , linestyle=linestyles['solid'], linewidth=1.5, color=tableau20[4] )
+#plt.plot( RANGE,  det_3d[0] , linestyle=linestyles['solid'], linewidth=1.5, color=tableau20[0] )
+#plt.plot( RANGE,  det_3d[1] , linestyle=linestyles['solid'], linewidth=1.5, color=tableau20[2] )
+#plt.plot( RANGE,  det_3d[2] , linestyle=linestyles['solid'], linewidth=1.5, color=tableau20[4] )
 plt.plot( RANGE,  det_bv[0] , linestyle=linestyles['densely dotted'], linewidth=1.5, color=tableau20[0] )
-plt.plot( RANGE,  det_bv[1] , linestyle=linestyles['densely dotted'], linewidth=1.5, color=tableau20[2] )
-plt.plot( RANGE,  det_bv[2] , linestyle=linestyles['densely dotted'], linewidth=1.5, color=tableau20[4] )
-
+#plt.plot( RANGE,  det_bv[1] , linestyle=linestyles['densely dotted'], linewidth=1.5, color=tableau20[2] )
+#plt.plot( RANGE,  det_bv[2] , linestyle=linestyles['densely dotted'], linewidth=1.5, color=tableau20[4] )
 
 plt.legend(['3d easy', '3d moderate', '3d hard', 'bird view easy', 'bird view moderate', 'bird view hard'], loc=4)
 

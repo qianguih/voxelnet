@@ -80,9 +80,9 @@ def align_img_and_pc(img_dir, pc_dir, calib_dir):
     return points
 
 # update the following directories
-IMG_ROOT = "D:\VoxelNet-tensorflow\data_object_image_2\\training\image_2\\"
-PC_ROOT = "D:\VoxelNet-tensorflow\data_object_velodyne\\training\\velodyne\\"
-CALIB_ROOT = "D:\VoxelNet-tensorflow\data_object_calib\\training\calib\\"
+IMG_ROOT = "/home/anshul/Project/voxelnet-1/data_object_image_2/training/image_2/"
+PC_ROOT = "/home/anshul/Project/voxelnet-1/data_object_velodyne/training/velodyne/"
+CALIB_ROOT = "/home/anshul/Project/voxelnet-1/data_object_calib/training/calib/"
 
 
 

@@ -8,7 +8,7 @@ import os
 import time
 import sys
 import tensorflow as tf
-#import tensorflow.compat.v1 as tf
+#import tensorflow.compat.v1 as tf.compat.v1
 
 from itertools import count
 
@@ -36,7 +36,7 @@ parser.add_argument('-be', '--beta', type=float, nargs='?', default=10.0,
                     help='set beta in los function')
 parser.add_argument('--output-path', type=str, nargs='?',
                     default='./predictions', help='results output dir')
-parser.add_argument('-v', '--vis', type=bool, nargs='?', default=False,
+parser.add_argument('-v', '--vis', type=bool, nargs='?', default=True,
                     help='set the flag to True if dumping visualizations')
 args = parser.parse_args()
 
@@ -56,12 +56,12 @@ os.makedirs(save_model_dir, exist_ok=True)
 
 def main(_):
     # TODO: split file support
-    with tf.Graph().as_default():      #tf.Graph and Session explained-https://www.easy-tensorflow.com/tf-tutorials/basics/graph-and-session
-        global save_model_dir          # Also- "https://www.easy-tensorflow.com/tf-tutorials/basics/graph-and-session" for as_default() function.
+    with tf.compat.v1.Graph().as_default():      #tf.compat.v1.Graph and Session explained-https://www.easy-tensorflow.com/tf.compat.v1-tutorials/basics/graph-and-session
+        global save_model_dir          # Also- "https://www.easy-tensorflow.com/tf.compat.v1-tutorials/basics/graph-and-session" for as_default() function.
         start_epoch = 0
         global_counter = 0
 
-        #gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=cfg.GPU_MEMORY_FRACTION,
+        #gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=cfg.GPU_MEMORY_FRACTION,
         #                            visible_device_list=cfg.GPU_AVAILABLE,
         #                            allow_growth=True)
         gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=cfg.GPU_MEMORY_FRACTION,
@@ -85,10 +85,10 @@ def main(_):
                 avail_gpus=cfg.GPU_AVAILABLE.split(',')
             )
             # param init/restore
-            if tf.train.get_checkpoint_state(save_model_dir):
+            if tf.compat.v1.train.get_checkpoint_state(save_model_dir):
                 print("Reading model parameters from %s" % save_model_dir)
                 model.saver.restore(
-                    sess, tf.train.latest_checkpoint(save_model_dir))
+                    sess, tf.compat.v1.train.latest_checkpoint(save_model_dir))
                 start_epoch = model.epoch.eval() + 1
                 global_counter = model.global_step.eval() + 1
             else:
@@ -206,5 +206,5 @@ def main(_):
 
 
 if __name__ == '__main__':
-    #tf.app.run(main)
+    #tf.compat.v1.app.run(main)
     tf.compat.v1.app.run(main)
