@@ -27,10 +27,10 @@ class RPN3D(object):
         # hyper parameters and status
         self.cls = cls
         self.single_batch_size = single_batch_size
-        self.learning_rate = tf.Variable(
-            float(learning_rate), trainable=False, dtype=tf.float32)
-        self.global_step = tf.Variable(1, trainable=False)
-        self.epoch = tf.Variable(0, trainable=False)
+        self.learning_rate = tf.compat.v1.Variable(
+            float(learning_rate), trainable=False, dtype=tf.compat.v1.float32)
+        self.global_step = tf.compat.v1.Variable(1, trainable=False)
+        self.epoch = tf.compat.v1.Variable(0, trainable=False)
         self.epoch_add_op = self.epoch.assign(self.epoch + 1)
         self.alpha = alpha
         self.beta = beta
@@ -38,11 +38,11 @@ class RPN3D(object):
 
         boundaries = [80, 120]
         values = [ self.learning_rate, self.learning_rate * 0.1, self.learning_rate * 0.01 ]
-        lr = tf.train.piecewise_constant(self.epoch, boundaries, values)
+        lr = tf.compat.v1.compat.v1.train.piecewise_constant(self.epoch, boundaries, values)
 
         # build graph
         # input placeholders
-        self.is_train = tf.placeholder(tf.bool, name='phase')
+        self.is_train = tf.compat.v1.compat.v1.placeholder(tf.compat.v1.bool, name='phase')
 
         self.vox_feature = []
         self.vox_number = []
@@ -56,19 +56,19 @@ class RPN3D(object):
 
         self.delta_output = []
         self.prob_output = []
-        self.opt = tf.train.AdamOptimizer(lr)
+        self.opt = tf.compat.v1.compat.v1.train.AdamOptimizer(lr)
         self.gradient_norm = []
         self.tower_grads = []
-        with tf.variable_scope(tf.get_variable_scope()):
+        with tf.compat.v1.compat.v1.variable_scope(tf.compat.v1.compat.v1.get_variable_scope()):
             for idx, dev in enumerate(self.avail_gpus):
-                with tf.device('/gpu:{}'.format(dev)), tf.name_scope('gpu_{}'.format(dev)):
+                with tf.compat.v1.device('/gpu:{}'.format(dev)), tf.compat.v1.name_scope('gpu_{}'.format(dev)):
                     # must use name scope here since we do not want to create new variables
                     # graph
                     feature = FeatureNet(
                         training=self.is_train, batch_size=self.single_batch_size)
                     rpn = MiddleAndRPN(
                         input=feature.outputs, alpha=self.alpha, beta=self.beta, training=self.is_train)
-                    tf.get_variable_scope().reuse_variables()
+                    tf.compat.v1.compat.v1.get_variable_scope().reuse_variables()
                     # input
                     self.vox_feature.append(feature.feature)
                     self.vox_number.append(feature.number)
@@ -86,16 +86,16 @@ class RPN3D(object):
                     prob_output = rpn.prob_output
                     # loss and grad
                     if idx == 0:
-                        self.extra_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+                        self.extra_update_ops = tf.compat.v1.compat.v1.get_collection(tf.compat.v1.compat.v1.GraphKeys.UPDATE_OPS)
 
                     self.loss = rpn.loss
                     self.reg_loss = rpn.reg_loss
                     self.cls_loss = rpn.cls_loss
                     self.cls_pos_loss = rpn.cls_pos_loss_rec
                     self.cls_neg_loss = rpn.cls_neg_loss_rec
-                    self.params = tf.trainable_variables()
-                    gradients = tf.gradients(self.loss, self.params)
-                    clipped_gradients, gradient_norm = tf.clip_by_global_norm(
+                    self.params = tf.compat.v1.compat.v1.trainable_variables()
+                    gradients = tf.compat.v1.compat.v1.gradients(self.loss, self.params)
+                    clipped_gradients, gradient_norm = tf.compat.v1.clip_by_global_norm(
                         gradients, max_gradient_norm)
 
                     self.delta_output.append(delta_output)
@@ -104,65 +104,65 @@ class RPN3D(object):
                     self.gradient_norm.append(gradient_norm)
                     self.rpn_output_shape = rpn.output_shape
 
-        self.vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+        self.vars = tf.compat.v1.compat.v1.get_collection(tf.compat.v1.compat.v1.GraphKeys.GLOBAL_VARIABLES)
 
         # loss and optimizer
         # self.xxxloss is only the loss for the lowest tower
-        with tf.device('/gpu:{}'.format(self.avail_gpus[0])):
+        with tf.compat.v1.device('/gpu:{}'.format(self.avail_gpus[0])):
             self.grads = average_gradients(self.tower_grads)
             self.update = [self.opt.apply_gradients(
                 zip(self.grads, self.params), global_step=self.global_step)]
-            self.gradient_norm = tf.group(*self.gradient_norm)
+            self.gradient_norm = tf.compat.v1.group(*self.gradient_norm)
 
         self.update.extend(self.extra_update_ops)
-        self.update = tf.group(*self.update)
+        self.update = tf.compat.v1.group(*self.update)
 
-        self.delta_output = tf.concat(self.delta_output, axis=0)
-        self.prob_output = tf.concat(self.prob_output, axis=0)
+        self.delta_output = tf.compat.v1.compat.v1.concat(self.delta_output, axis=0)
+        self.prob_output = tf.compat.v1.compat.v1.concat(self.prob_output, axis=0)
 
         self.anchors = cal_anchors()
         # for predict and image summary
-        self.rgb = tf.placeholder(
-            tf.uint8, [None, cfg.IMAGE_HEIGHT, cfg.IMAGE_WIDTH, 3])
-        self.bv = tf.placeholder(tf.uint8, [
+        self.rgb = tf.compat.v1.compat.v1.placeholder(
+            tf.compat.v1.uint8, [None, cfg.IMAGE_HEIGHT, cfg.IMAGE_WIDTH, 3])
+        self.bv = tf.compat.v1.compat.v1.placeholder(tf.compat.v1.uint8, [
                                  None, cfg.BV_LOG_FACTOR * cfg.INPUT_HEIGHT, cfg.BV_LOG_FACTOR * cfg.INPUT_WIDTH, 3])
-        self.bv_heatmap = tf.placeholder(tf.uint8, [
+        self.bv_heatmap = tf.compat.v1.compat.v1.placeholder(tf.compat.v1.uint8, [
             None, cfg.BV_LOG_FACTOR * cfg.FEATURE_HEIGHT, cfg.BV_LOG_FACTOR * cfg.FEATURE_WIDTH, 3])
-        self.boxes2d = tf.placeholder(tf.float32, [None, 4])
-        self.boxes2d_scores = tf.placeholder(tf.float32, [None])
+        self.boxes2d = tf.compat.v1.compat.v1.placeholder(tf.compat.v1.float32, [None, 4])
+        self.boxes2d_scores = tf.compat.v1.compat.v1.placeholder(tf.compat.v1.float32, [None])
 
         # NMS(2D)
-        with tf.device('/gpu:{}'.format(self.avail_gpus[0])):
-            self.box2d_ind_after_nms = tf.image.non_max_suppression(
+        with tf.compat.v1.device('/gpu:{}'.format(self.avail_gpus[0])):
+            self.box2d_ind_after_nms = tf.compat.v1.image.non_max_suppression(
                 self.boxes2d, self.boxes2d_scores, max_output_size=cfg.RPN_NMS_POST_TOPK, iou_threshold=cfg.RPN_NMS_THRESH)
 
         # summary and saver
-        self.saver = tf.train.Saver(write_version=tf.train.SaverDef.V2,
+        self.saver = tf.compat.v1.compat.v1.train.Saver(write_version=tf.compat.v1.compat.v1.train.SaverDef.V2,
                                     max_to_keep=10, pad_step_number=True, keep_checkpoint_every_n_hours=1.0)
 
-        self.train_summary = tf.summary.merge([
-            tf.summary.scalar('train/loss', self.loss),
-            tf.summary.scalar('train/reg_loss', self.reg_loss),
-            tf.summary.scalar('train/cls_loss', self.cls_loss),
-            tf.summary.scalar('train/cls_pos_loss', self.cls_pos_loss),
-            tf.summary.scalar('train/cls_neg_loss', self.cls_neg_loss),
-            *[tf.summary.histogram(each.name, each) for each in self.vars + self.params]
+        self.train_summary = tf.compat.v1.compat.v1.summary.merge([
+            tf.compat.v1.compat.v1.summary.scalar('train/loss', self.loss),
+            tf.compat.v1.compat.v1.summary.scalar('train/reg_loss', self.reg_loss),
+            tf.compat.v1.compat.v1.summary.scalar('train/cls_loss', self.cls_loss),
+            tf.compat.v1.compat.v1.summary.scalar('train/cls_pos_loss', self.cls_pos_loss),
+            tf.compat.v1.compat.v1.summary.scalar('train/cls_neg_loss', self.cls_neg_loss),
+            *[tf.compat.v1.compat.v1.summary.histogram(each.name, each) for each in self.vars + self.params]
         ])
 
-        self.validate_summary = tf.summary.merge([
-            tf.summary.scalar('validate/loss', self.loss),
-            tf.summary.scalar('validate/reg_loss', self.reg_loss),
-            tf.summary.scalar('validate/cls_loss', self.cls_loss),
-            tf.summary.scalar('validate/cls_pos_loss', self.cls_pos_loss),
-            tf.summary.scalar('validate/cls_neg_loss', self.cls_neg_loss)
+        self.validate_summary = tf.compat.v1.compat.v1.summary.merge([
+            tf.compat.v1.compat.v1.summary.scalar('validate/loss', self.loss),
+            tf.compat.v1.compat.v1.summary.scalar('validate/reg_loss', self.reg_loss),
+            tf.compat.v1.compat.v1.summary.scalar('validate/cls_loss', self.cls_loss),
+            tf.compat.v1.compat.v1.summary.scalar('validate/cls_pos_loss', self.cls_pos_loss),
+            tf.compat.v1.compat.v1.summary.scalar('validate/cls_neg_loss', self.cls_neg_loss)
         ])
 
         # TODO: bird_view_summary and front_view_summary
 
-        self.predict_summary = tf.summary.merge([
-            tf.summary.image('predict/bird_view_lidar', self.bv),
-            tf.summary.image('predict/bird_view_heatmap', self.bv_heatmap),
-            tf.summary.image('predict/front_view_rgb', self.rgb),
+        self.predict_summary = tf.compat.v1.compat.v1.summary.merge([
+            tf.compat.v1.compat.v1.summary.image('predict/bird_view_lidar', self.bv),
+            tf.compat.v1.compat.v1.summary.image('predict/bird_view_heatmap', self.bv_heatmap),
+            tf.compat.v1.compat.v1.summary.image('predict/front_view_rgb', self.rgb),
         ])
 
     def train_step(self, session, data, train=False, summary=False):
@@ -320,18 +320,18 @@ class RPN3D(object):
             # only summry 1 in a batch
             cur_tag = tag[0]
             P, Tr, R = load_calib( os.path.join( cfg.CALIB_DIR, cur_tag + '.txt' ) )
-            
+
             front_image = draw_lidar_box3d_on_image(img[0], ret_box3d[0], ret_score[0],
                                                     batch_gt_boxes3d[0], P2=P, T_VELO_2_CAM=Tr, R_RECT_0=R)
-            
+
             bird_view = lidar_to_bird_view_img(
                 lidar[0], factor=cfg.BV_LOG_FACTOR)
-                
+
             bird_view = draw_lidar_box3d_on_birdview(bird_view, ret_box3d[0], ret_score[0],
                                                      batch_gt_boxes3d[0], factor=cfg.BV_LOG_FACTOR, P2=P, T_VELO_2_CAM=Tr, R_RECT_0=R)
-            
+
             heatmap = colorize(probs[0, ...], cfg.BV_LOG_FACTOR)
-        
+
             ret_summary = session.run(self.predict_summary, {
                 self.rgb: front_image[np.newaxis, ...],
                 self.bv: bird_view[np.newaxis, ...],
@@ -339,28 +339,28 @@ class RPN3D(object):
             })
 
             return tag, ret_box3d_score, ret_summary
-        
+
         if vis:
             front_images, bird_views, heatmaps = [], [], []
             for i in range(len(img)):
                 cur_tag = tag[i]
                 P, Tr, R = load_calib( os.path.join( cfg.CALIB_DIR, cur_tag + '.txt' ) )
-                
+
                 front_image = draw_lidar_box3d_on_image(img[i], ret_box3d[i], ret_score[i],
                                                  batch_gt_boxes3d[i], P2=P, T_VELO_2_CAM=Tr, R_RECT_0=R)
-                                                 
+
                 bird_view = lidar_to_bird_view_img(
                                                  lidar[i], factor=cfg.BV_LOG_FACTOR)
-                                                 
+
                 bird_view = draw_lidar_box3d_on_birdview(bird_view, ret_box3d[i], ret_score[i],
                                                  batch_gt_boxes3d[i], factor=cfg.BV_LOG_FACTOR, P2=P, T_VELO_2_CAM=Tr, R_RECT_0=R)
-                
+
                 heatmap = colorize(probs[i, ...], cfg.BV_LOG_FACTOR)
-                
+
                 front_images.append(front_image)
                 bird_views.append(bird_view)
                 heatmaps.append(heatmap)
-            
+
             return tag, ret_box3d_score, front_images, bird_views, heatmaps
 
         return tag, ret_box3d_score
@@ -375,14 +375,14 @@ def average_gradients(tower_grads):
         grads = []
         for g in grad_and_vars:
             # Add 0 dimension to the gradients to represent the tower.
-            expanded_g = tf.expand_dims(g, 0)
+            expanded_g = tf.compat.v1.expand_dims(g, 0)
 
             # Append on a 'tower' dimension which we will average over below.
             grads.append(expanded_g)
 
         # Average over the 'tower' dimension.
-        grad = tf.concat(axis=0, values=grads)
-        grad = tf.reduce_mean(grad, 0)
+        grad = tf.compat.v1.concat(axis=0, values=grads)
+        grad = tf.compat.v1.reduce_mean(grad, 0)
 
         # Keep in mind that the Variables are redundant because they are shared
         # across towers. So .. we will just return the first tower's pointer to
@@ -394,5 +394,3 @@ def average_gradients(tower_grads):
 
 if __name__ == '__main__':
     pass
-
-

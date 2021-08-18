@@ -12,16 +12,21 @@ This is an unofficial inplementation of [VoxelNet: End-to-End Learning for Point
 
 # Installation
 1. Clone this repository.
-2. Compile the Cython module
+2. Install the necessary packages 
+```bash
+$ sudo apt-get install libboost-all-dev
+$ sudo apt-get install python-numpy
+```
+3. Compile the Cython module
 ```bash
 $ python3 setup.py build_ext --inplace
 ```
-3. Compile the evaluation code
+4. Compile the evaluation code
 ```bash
 $ cd kitti_eval
 $ g++ -o evaluate_object_3d_offline evaluate_object_3d_offline.cpp
 ```
-4. grant the execution permission to evaluation script
+5. grant the execution permission to evaluation script
 ```bash
 $ cd kitti_eval
 $ chmod +x launch_test.sh
@@ -65,9 +70,6 @@ Training on two Nvidia 1080 Ti GPUs takes around 3 days (160 epochs as reported 
 ```bash
 $ python3 parse_log.py predictions
 ```
-
-4. There is a pre-trained model for car in `save_model/pre_trained_car`.
-
 
 # Evaluate
 1. run `test.py -n default` to produce final predictions on the validation set after training is done. Change `-n` flag to `pre_trained_car` will start testing for the pre-trained model (only car model provided for now).

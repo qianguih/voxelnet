@@ -20,14 +20,15 @@ if __name__ == '__main__':
                         help='set log tag')
     parser.add_argument('--output-path', type=str, nargs='?',
                         default='./predictions', help='results output dir')
-    parser.add_argument('-b', '--single-batch-size', type=int, nargs='?', default=2,
+    parser.add_argument('-b', '--single-batch-size', type=int, nargs='?', default=1,
                         help='set batch size for each gpu')
-    parser.add_argument('-v', '--vis', type=bool, nargs='?', default=False,
+    parser.add_argument('-v', '--vis', type=bool, nargs='?', default=True,
                         help='set the flag to True if dumping visualizations')
     args = parser.parse_args()
 
     dataset_dir = cfg.DATA_DIR
     val_dir = os.path.join(cfg.DATA_DIR, 'validation')
+    #val_dir="/home/anshul/Project/Test_Bhoopen"
     save_model_dir = os.path.join('./save_model', args.tag)
     
     # create output folder
@@ -37,13 +38,13 @@ if __name__ == '__main__':
         os.makedirs(os.path.join(args.output_path, 'vis'), exist_ok=True)
 
 
-    with tf.Graph().as_default():
+    with tf.compat.v1.Graph().as_default():
 
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=cfg.GPU_MEMORY_FRACTION,
+        gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=cfg.GPU_MEMORY_FRACTION,
                             visible_device_list=cfg.GPU_AVAILABLE,
                             allow_growth=True)
     
-        config = tf.ConfigProto(
+        config = tf.compat.v1.ConfigProto(
             gpu_options=gpu_options,
             device_count={
                 "GPU": cfg.GPU_USE_COUNT,
@@ -51,16 +52,16 @@ if __name__ == '__main__':
             allow_soft_placement=True,
         )
 
-        with tf.Session(config=config) as sess:
+        with tf.compat.v1.Session(config=config) as sess:
             model = RPN3D(
                 cls=cfg.DETECT_OBJ,
                 single_batch_size=args.single_batch_size,
                 avail_gpus=cfg.GPU_AVAILABLE.split(',')
             )
-            if tf.train.get_checkpoint_state(save_model_dir):
+            if tf.compat.v1.train.get_checkpoint_state(save_model_dir):
                 print("Reading model parameters from %s" % save_model_dir)
                 model.saver.restore(
-                    sess, tf.train.latest_checkpoint(save_model_dir))
+                    sess, tf.compat.v1.train.latest_checkpoint(save_model_dir))
             
             
             for batch in iterate_data(val_dir, shuffle=False, aug=False, is_testset=False, batch_size=args.single_batch_size * cfg.GPU_USE_COUNT, multi_gpu_sum=cfg.GPU_USE_COUNT):
